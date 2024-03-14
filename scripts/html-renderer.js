@@ -92,10 +92,10 @@ function createTableFooter(tableEl, headers) {
 }
 
 function getProductsInfo(row) {
-  return PRODUCTS.map((product) => [
+  return PRODUCTS.flatMap((product) => [
     row.productsQuantity[product],
     row.productsAmount[product],
-  ]).flat()
+  ])
 }
 
 function createPagination(state, onPageClick) {
@@ -152,6 +152,6 @@ const aggregations = [
   {
     calculateValue: metricsHelpers.calculateSumOfTotalSales,
     name: 'Сумма всех продаж',
-    columns: [9],
+    columns: [headers.length - 2],
   },
 ]

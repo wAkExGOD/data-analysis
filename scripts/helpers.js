@@ -68,7 +68,7 @@ export function fillCompaniesProductsWithMetrics(rows) {
 export function convertNumber(number) {
   const convertedNumber = +number.toFixed(2)
 
-  return typeof convertedNumber === 'number' ? convertedNumber : null
+  return isNaN(convertedNumber) ? null : convertedNumber
 }
 
 export function getNumbersFromElements(tableEl, elementsSelector) {
