@@ -1,34 +1,35 @@
-import { TRANSLATIONS, PRODUCTS } from './constants.js'
+import {
+  TRANSLATIONS,
+  PRODUCTS,
+  ROWS_PER_PAGE_VARIANTS,
+  TABLE_HEADERS,
+} from './constants.js'
 import { metricsHelpers } from './helpers.js'
 
-const headers = [
-  'name',
-  ...PRODUCTS.map((product) => [
-    `${product} (шт.)`,
-    `${product} (руб.)`,
-  ]).flat(),
-  'totalMoneySpent',
-  'percentageOfTotalSales',
-]
+export function render(state, eventHandlers) {
+  const { onPageClick, onRowsPerPageClick } = eventHandlers
 
-export function render(state, onPageClick) {
-  const { companies } = state
-  const containerEl = document.querySelector('.container')
+  const paginationWrapperEl = document.querySelector('.paginationWrapper')
+  const tableWrapperEl = document.querySelector('.tableWrapper')
   const tableEl = document.createElement('table')
 
-  containerEl.innerHTML = ''
+  tableWrapperEl.innerHTML = ''
+  paginationWrapperEl.innerHTML = ''
 
-  tableEl.appendChild(createTableHeaders(headers))
+  tableEl.appendChild(createTableHeaders(TABLE_HEADERS))
   tableEl.appendChild(createTableBody(state))
-  tableEl.appendChild(createTableFooter(tableEl, headers))
+  tableEl.appendChild(createTableFooter(tableEl, TABLE_HEADERS))
 
-  containerEl.appendChild(tableEl)
-  createPagination(state, onPageClick)
+  tableWrapperEl.appendChild(tableEl)
+  paginationWrapperEl.appendChild(
+    createPagination(state, onPageClick, onRowsPerPageClick)
+  )
 }
 
 function createTableHeaders(headers) {
   const theadEl = document.createElement('thead')
   const rowEl = document.createElement('tr')
+
   headers.forEach((key) => {
     const tdEl = document.createElement('th')
     tdEl.innerText = TRANSLATIONS[key] || key
@@ -45,16 +46,16 @@ function createTableBody(state) {
 
   companies
     .slice((page - 1) * rowsPerPage, page * rowsPerPage)
-    .forEach((row) => {
+    .forEach((company) => {
       const rowEl = document.createElement('tr')
 
-      const rowInfo = [
-        row.name,
-        ...getProductsInfo(row),
-        row.totalMoneySpent,
-        row.percentageOfTotalSales,
+      const companyInfo = [
+        company.company,
+        ...getProductsAmountAndPrices(company),
+        company.revenue,
+        company.percentageOfTotalPurchases,
       ]
-      rowInfo.forEach((value) => {
+      companyInfo.forEach((value) => {
         const cellEl = document.createElement('td')
         cellEl.innerText = value
         rowEl.appendChild(cellEl)
@@ -91,26 +92,43 @@ function createTableFooter(tableEl, headers) {
   return tfootEl
 }
 
-function getProductsInfo(row) {
-  return PRODUCTS.flatMap((product) => [
-    row.productsQuantity[product],
-    row.productsAmount[product],
-  ])
+function getProductsAmountAndPrices(company) {
+  return PRODUCTS.flatMap((productName) => {
+    const product = company.products.find((p) => p.name === productName)
+
+    if (!product) {
+      return
+    }
+
+    return [product.amount, product.price]
+  })
 }
 
-function createPagination(state, onPageClick) {
+function createPagination(state, onPageClick, onRowsPerPageClick) {
   const { page, rowsPerPage } = state
-  const paginationEl = document.querySelector('.pagination')
+  const paginationEl = document.createElement('div')
+  paginationEl.classList.add('pagination')
 
   paginationEl.innerHTML = ''
 
   const prevButton = document.createElement('button')
   const nextButton = document.createElement('button')
+  const selectWrapperEl = document.createElement('label')
+  const rowsPerPageSelectEl = document.createElement('select')
 
   prevButton.classList.add('prev')
   nextButton.classList.add('next')
+  nextButton.classList.add('next')
+  selectWrapperEl.classList.add('select')
   prevButton.appendChild(document.createElement('i'))
   nextButton.appendChild(document.createElement('i'))
+  ROWS_PER_PAGE_VARIANTS.map((v) => {
+    const optionEl = document.createElement('option')
+    optionEl.selected = v === rowsPerPage
+    optionEl.textContent = v
+    optionEl.value = v
+    rowsPerPageSelectEl.appendChild(optionEl)
+  })
 
   if (page - 1 === 0) {
     prevButton.classList.add('disabled')
@@ -119,15 +137,15 @@ function createPagination(state, onPageClick) {
     nextButton.classList.add('disabled')
   }
 
-  prevButton.addEventListener('click', () => {
-    onPageClick(page - 1)
-  })
-  // add select
-  nextButton.addEventListener('click', () => {
-    onPageClick(page + 1)
-  })
+  prevButton.addEventListener('click', () => onPageClick(page - 1))
+  rowsPerPageSelectEl.addEventListener('change', (e) =>
+    onRowsPerPageClick(+e.target.value)
+  )
+  nextButton.addEventListener('click', () => onPageClick(page + 1))
 
+  selectWrapperEl.appendChild(rowsPerPageSelectEl)
   paginationEl.appendChild(prevButton)
+  paginationEl.appendChild(selectWrapperEl)
   paginationEl.appendChild(nextButton)
 
   return paginationEl
@@ -152,6 +170,6 @@ const aggregations = [
   {
     calculateValue: metricsHelpers.calculateSumOfTotalSales,
     name: 'Сумма всех продаж',
-    columns: [headers.length - 2],
+    columns: [TABLE_HEADERS.length - 2],
   },
 ]

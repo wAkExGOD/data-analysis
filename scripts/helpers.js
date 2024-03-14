@@ -6,59 +6,62 @@ export function validateRecords(records) {
   )
 }
 
+// [
+//   {
+//     company: 'a123',
+//     products: [
+//       { name: 'Milk', amount: 10, price: 20 },
+//       { name: 'Eggs', amount: 12, price: 24 },
+//     ]
+//   }
+// ]
+
 export function formCompaniesArray(initialRows) {
   const filteredRows = validateRecords(initialRows)
 
-  const completedRows = filteredRows.reduce((rows, r) => {
-    const found = rows.find((c) => c.name === r.company)
+  const companies = filteredRows.reduce((rows, r) => {
+    const found = rows.find((c) => c.company === r.company)
 
     if (found) {
-      found.productsQuantity[r.product] =
-        found.productsQuantity[r.product] + r.count
+      const product = found.products.find((p) => p.name === r.product)
+      product.amount += r.count
     } else {
-      const company = {
-        name: r.company,
-        productsQuantity: {
-          [r.product]: r.count,
-        },
-        productsAmount: {},
-      }
-      PRODUCTS.forEach((product) => {
-        company.productsQuantity[product] =
-          company.productsQuantity[product] ?? 0
-        company.productsAmount[product] = company.productsAmount[product] ?? 0
+      rows.push({
+        company: r.company,
+        products: PRODUCTS.map((productName) => ({
+          name: productName,
+          amount: productName === r.product ? r.count : 0,
+          price: 0,
+        })),
       })
-      rows.push(company)
     }
 
     return rows
   }, [])
 
-  return fillCompaniesProductsWithMetrics(completedRows)
+  return fillCompaniesProductsWithMetrics(companies)
 }
 
-export function fillCompaniesProductsWithMetrics(rows) {
-  const rowsWithTotalSpent = rows.map((company) => {
-    PRODUCTS.forEach((product) => {
-      company.productsAmount[product] = convertNumber(
-        company.productsQuantity[product] * PRICES[product]
-      )
+export function fillCompaniesProductsWithMetrics(companies) {
+  const companiesWithTotalSpent = companies.map((company) => {
+    PRODUCTS.forEach((productName) => {
+      const product = company.products.find((p) => p.name === productName)
+      product.price = convertNumber(product.amount * PRICES[productName])
     })
-    company.totalMoneySpent = convertNumber(
-      PRODUCTS.reduce(
-        (sum, product) => sum + company.productsAmount[product],
-        0
-      )
+
+    company.revenue = convertNumber(
+      company.products.reduce((sum, product) => (sum += product.price), 0)
     )
     return company
   })
-  const sumOfTotalSales = convertNumber(
-    rows.reduce((sumOfAllSales, r) => (sumOfAllSales += r.totalMoneySpent), 0)
+
+  const sumOfTotalPurchases = convertNumber(
+    companies.reduce((sum, c) => (sum += c.revenue), 0)
   )
 
-  return rowsWithTotalSpent.map((company) => {
-    company.percentageOfTotalSales = convertNumber(
-      (company.totalMoneySpent / sumOfTotalSales) * 100
+  return companiesWithTotalSpent.map((company) => {
+    company.percentageOfTotalPurchases = convertNumber(
+      (company.revenue / sumOfTotalPurchases) * 100
     )
 
     return company
