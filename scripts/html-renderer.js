@@ -4,17 +4,22 @@ import {
   ROWS_PER_PAGE_VARIANTS,
   TABLE_HEADERS,
 } from './constants.js'
-import { metricsHelpers } from './helpers.js'
+import { debounce, metricsHelpers } from './helpers.js'
 
 export function render(state, eventHandlers) {
-  const { onPageClick, onRowsPerPageClick } = eventHandlers
+  const { onPageClick, onRowsPerPageClick, onTextChange } = eventHandlers
 
+  const filterWrapperEl = document.querySelector('.filterWrapper')
   const paginationWrapperEl = document.querySelector('.paginationWrapper')
   const tableWrapperEl = document.querySelector('.tableWrapper')
   const tableEl = document.createElement('table')
 
+  filterWrapperEl.innerHTML = ''
   tableWrapperEl.innerHTML = ''
   paginationWrapperEl.innerHTML = ''
+
+  const inputEl = createFilter(state, onTextChange)
+  filterWrapperEl.appendChild(inputEl)
 
   tableEl.appendChild(createTableHeaders(TABLE_HEADERS))
   tableEl.appendChild(createTableBody(state))
@@ -24,6 +29,22 @@ export function render(state, eventHandlers) {
   paginationWrapperEl.appendChild(
     createPagination(state, onPageClick, onRowsPerPageClick)
   )
+
+  inputEl.focus()
+}
+
+function createFilter(state, onTextChange) {
+  const inputEl = document.createElement('input')
+  inputEl.classList.add('filter')
+  inputEl.placeholder = 'Company...'
+  inputEl.value = state.filterText
+
+  const debouncedSearch = debounce((e) => {
+    onTextChange(e.target.value)
+  }, 500)
+  inputEl.addEventListener('input', debouncedSearch)
+
+  return inputEl
 }
 
 function createTableHeaders(headers) {
@@ -41,7 +62,7 @@ function createTableHeaders(headers) {
 }
 
 function createTableBody(state) {
-  const { companies, page, rowsPerPage } = state
+  const { companies, page, rowsPerPage, filterText } = state
   const tbodyEl = document.createElement('tbody')
 
   companies
@@ -82,7 +103,7 @@ function createTableFooter(tableEl, headers) {
       }
 
       cellEl.innerText = aggregation.columns.includes(j)
-        ? aggregation.calculateValue(tableEl, j)
+        ? aggregation.calculateValue(tableEl, j) || '-'
         : '-'
     })
 

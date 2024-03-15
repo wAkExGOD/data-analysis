@@ -6,16 +6,6 @@ export function validateRecords(records) {
   )
 }
 
-// [
-//   {
-//     company: 'a123',
-//     products: [
-//       { name: 'Milk', amount: 10, price: 20 },
-//       { name: 'Eggs', amount: 12, price: 24 },
-//     ]
-//   }
-// ]
-
 export function formCompaniesArray(initialRows) {
   const filteredRows = validateRecords(initialRows)
 
@@ -86,7 +76,7 @@ function calculateMaxTotalProductAmount(tableEl, tdIndex) {
     `tbody > tr > td:nth-child(${tdIndex + 1})`
   )
 
-  return convertNumber(Math.max(...quantities))
+  return quantities.length > 0 ? convertNumber(Math.max(...quantities)) : 0
 }
 
 function calculateAverageSoldProductQuantity(tableEl, tdIndex) {
@@ -97,10 +87,12 @@ function calculateAverageSoldProductQuantity(tableEl, tdIndex) {
 
   const filteredQuantities = quantities.filter((r) => r > 0)
 
-  return convertNumber(
-    filteredQuantities.reduce((sum, r) => (sum += r), 0) /
-      filteredQuantities.length
-  )
+  return filteredQuantities.length > 0
+    ? convertNumber(
+        filteredQuantities.reduce((sum, r) => (sum += r), 0) /
+          filteredQuantities.length
+      )
+    : null
 }
 
 function calculateMedianOfAllProductSales(tableEl, tdIndex) {
@@ -134,6 +126,20 @@ function calculateSumOfTotalSales(tableEl, tdIndex) {
   return convertNumber(
     amounts.reduce((sumOfAllSales, amount) => (sumOfAllSales += amount), 0)
   )
+}
+
+export function debounce(callee, timeoutMs) {
+  return function perform(...args) {
+    let previousCall = this.lastCall
+
+    this.lastCall = Date.now()
+
+    if (previousCall && this.lastCall - previousCall <= timeoutMs) {
+      clearTimeout(this.lastCallTimer)
+    }
+
+    this.lastCallTimer = setTimeout(() => callee(...args), timeoutMs)
+  }
 }
 
 export const metricsHelpers = {
