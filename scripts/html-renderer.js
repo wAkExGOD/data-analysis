@@ -39,10 +39,10 @@ function createFilter(state, onTextChange) {
   inputEl.placeholder = 'Company...'
   inputEl.value = state.filterText
 
-  const debouncedSearch = debounce((e) => {
+  const handleSearch = debounce((e) => {
     onTextChange(e.target.value)
   }, 500)
-  inputEl.addEventListener('input', debouncedSearch)
+  inputEl.addEventListener('input', handleSearch)
 
   return inputEl
 }

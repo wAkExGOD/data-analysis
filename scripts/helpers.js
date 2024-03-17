@@ -1,8 +1,8 @@
 import { PRICES, PRODUCTS } from './constants.js'
 
 export function validateRecords(records) {
-  return records.filter(({ company, product, count }) =>
-    Boolean(company && product && count > 0)
+  return records.filter(
+    ({ company, product, count }) => company && product && count > 0
   )
 }
 
@@ -40,13 +40,13 @@ export function fillCompaniesProductsWithMetrics(companies) {
     })
 
     company.revenue = convertNumber(
-      company.products.reduce((sum, product) => (sum += product.price), 0)
+      company.products.reduce((sum, product) => sum + product.price, 0)
     )
     return company
   })
 
   const sumOfTotalPurchases = convertNumber(
-    companies.reduce((sum, c) => (sum += c.revenue), 0)
+    companies.reduce((sum, c) => sum + c.revenue, 0)
   )
 
   return companiesWithTotalSpent.map((company) => {
@@ -89,7 +89,7 @@ function calculateAverageSoldProductQuantity(tableEl, tdIndex) {
 
   return filteredQuantities.length > 0
     ? convertNumber(
-        filteredQuantities.reduce((sum, r) => (sum += r), 0) /
+        filteredQuantities.reduce((sum, r) => sum + r, 0) /
           filteredQuantities.length
       )
     : null
@@ -124,7 +124,7 @@ function calculateSumOfTotalSales(tableEl, tdIndex) {
   )
 
   return convertNumber(
-    amounts.reduce((sumOfAllSales, amount) => (sumOfAllSales += amount), 0)
+    amounts.reduce((sumOfAllSales, amount) => sumOfAllSales + amount, 0)
   )
 }
 

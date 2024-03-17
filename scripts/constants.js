@@ -6,10 +6,7 @@ export const UPDATE_EVENT = 'update-table'
 export const ROWS_PER_PAGE_VARIANTS = [10, 50, 100]
 export const TABLE_HEADERS = [
   'name',
-  ...PRODUCTS.map((product) => [
-    `${product} (шт.)`,
-    `${product} (руб.)`,
-  ]).flat(),
+  ...PRODUCTS.flatMap((product) => [`${product} (шт.)`, `${product} (руб.)`]),
   'revenue',
   'percentageOfTotalPurchases',
 ]
